@@ -1,18 +1,13 @@
 package com.example.demo.dto;
-//
-//public class OpenAIRequest {
-//
-//}
 
-// OpenAIRequest.java
 public class OpenAIRequest {
-    private String prompt;
+	private String prompt;
 
-    public String getPrompt() {
-        return prompt;
-    }
+	public String getPrompt() {
+		return prompt;
+	}
 
-    public void setPrompt(String prompt) {
-        this.prompt = prompt;
-    }
+	public void setPrompt(String prompt) {
+		this.prompt = prompt;
+	}
 }

@@ -27,131 +27,116 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @CrossOrigin(origins = "http://localhost:4200")
 public class OpenAIController {
 
-    @Value("${apiKey}")
-    private String apiKey;
-    
-    
-    @Value("${queries1.DBdescription}")
-    private String DBdescription;
-    
-    @Autowired
-    private OpenAIService openAIService;
-    
+	@Value("${apiKey}")
+	private String apiKey;
 
-    @PostMapping("/generate")
-    public ResponseEntity<Map<String, String>> generate(@RequestBody OpenAIRequest request) {
-        RestTemplate restTemplate = new RestTemplate();
-        String url = "https://api.openai.com/v1/chat/completions";
+	@Value("${queries.DBdescription}")
+	private String DBdescription;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+	@Autowired
+	private OpenAIService openAIService;
 
-        Map<String, Object> message = new HashMap<>();
-        message.put("role", "user");
-        message.put("content", request.getPrompt());
+	@PostMapping("/generate")
+	public ResponseEntity<Map<String, String>> generate(@RequestBody OpenAIRequest request) {
+		RestTemplate restTemplate = new RestTemplate();
+		String url = "https://api.openai.com/v1/chat/completions";
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("model", "gpt-4o-mini");
-        body.put("messages", List.of(message));
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.setBearerAuth(apiKey);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-        ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+		Map<String, Object> message = new HashMap<>();
+		message.put("role", "user");
+		message.put("content", request.getPrompt());
 
-        // Extract result
-        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
-        String output = (String) ((Map<String, Object>) choices.get(0).get("message")).get("content");
+		Map<String, Object> body = new HashMap<>();
+		body.put("model", "gpt-4o-mini");
+		body.put("messages", List.of(message));
 
-        Map<String, String> result = new HashMap<>();
-        result.put("output_text", output);
+		HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+		ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
-        return ResponseEntity.ok(result);
-    }
-    
-    
-    private final RestTemplate restTemplate = new RestTemplate();
+		// Extract result
+		List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+		String output = (String) ((Map<String, Object>) choices.get(0).get("message")).get("content");
 
-    @PostMapping("/chat")
-    public ResponseEntity<String> getChatResponse(@RequestBody Map<String, String> request) {
-    	
-    	System.out.println("DB description " + DBdescription);
-        // get DB query
-    	System.out.println("received request is "+ DBdescription +" "+request);
-    	
-    	
-        String prompt =  DBdescription + request.get("message");
-      
+		Map<String, String> result = new HashMap<>();
+		result.put("output_text", output);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+		return ResponseEntity.ok(result);
+	}
 
-        Map<String, Object> body = Map.of(
-            "model", "gpt-4o-mini",
-            "messages", List.of(Map.of("role", "user", "content", prompt))
-        );
+	private final RestTemplate restTemplate = new RestTemplate();
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+	@PostMapping("/chat")
+	public ResponseEntity<String> getChatResponse(@RequestBody Map<String, String> request) {
 
-        String apiUrl = "https://api.openai.com/v1/chat/completions";
-        ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
+		System.out.println("DB description " + DBdescription);
+		// get DB query
+		System.out.println("received request is " + DBdescription + " " + request);
 
-        
-        // make DB call to get data
-        System.out.println("printing controller res" + response.getBody());
-        List<String> obj =   this.openAIService.getData(response.getBody());
-       
-        System.out.println("received final list "+ obj);
-        String result = obj.stream()
-                .collect(Collectors.joining(", "));
+		String prompt = DBdescription + request.get("message");
 
-        
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.setBearerAuth(apiKey);
 
-     return new ResponseEntity<String>(result,HttpStatusCode.valueOf(200));
-    }
+		Map<String, Object> body = Map.of("model", "gpt-4o-mini", "messages",
+				List.of(Map.of("role", "user", "content", prompt)));
 
-    //@PostMapping("/explain")
-    public String explainData(@RequestBody OpenAIRequestDTO request) {
-        // Convert clients + date/time + question into a prompt string
-        StringBuilder prompt = new StringBuilder();
-        prompt.append("Data for date/time: ").append(request.getDateTime()).append("\n");
-        prompt.append("Clients data:\n");
-        for (CombinedClient client : request.getClients()) {
-            prompt.append(client.getClientId())
-                  .append(": TodayCount = ").append(client.getTodayCount())
-                  .append(", YesterdayCount = ").append(client.getYesterdayCount())
-                  .append("\n");
-        }
-        prompt.append("Question: ").append(request.getQuestion());
+		HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        System.out.println("prompt is " +prompt.toString());
-        String openAIResponse = callOpenAI(prompt.toString());
-       // String openAIResponse = null;
-        return openAIResponse;
-    }
-    
-    private String callOpenAI(String prompt) {
-       
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+		String apiUrl = "https://api.openai.com/v1/chat/completions";
+		ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
 
-        Map<String, Object> body = Map.of(
-            "model", "gpt-4o-mini",
-            "messages", List.of(Map.of("role", "user", "content", prompt))
-        );
+		// make DB call to get data
+		System.out.println("printing controller res" + response.getBody());
+		List<String> obj = this.openAIService.getData(response.getBody());
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+		System.out.println("received final list " + obj);
+		String result = obj.stream().collect(Collectors.joining(", "));
 
-        String apiUrl = "https://api.openai.com/v1/chat/completions";
-        ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
-        JSONObject jsonObject = new JSONObject(response);
-        System.out.println(jsonObject.toString());
-        
-        String jsonResponse = response.getBody();
-        
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode rootNode = null;
+		return new ResponseEntity<String>(result, HttpStatusCode.valueOf(200));
+	}
+
+	// @PostMapping("/explain")
+	public String explainData(@RequestBody OpenAIRequestDTO request) {
+		// Convert clients + date/time + question into a prompt string
+		StringBuilder prompt = new StringBuilder();
+		prompt.append("Data for date/time: ").append(request.getDateTime()).append("\n");
+		prompt.append("Clients data:\n");
+		for (CombinedClient client : request.getClients()) {
+			prompt.append(client.getClientId()).append(": TodayCount = ").append(client.getTodayCount())
+					.append(", YesterdayCount = ").append(client.getYesterdayCount()).append("\n");
+		}
+		prompt.append("Question: ").append(request.getQuestion());
+
+		System.out.println("prompt is " + prompt.toString());
+		String openAIResponse = callOpenAI(prompt.toString());
+		// String openAIResponse = null;
+		return openAIResponse;
+	}
+
+	private String callOpenAI(String prompt) {
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.setBearerAuth(apiKey);
+
+		Map<String, Object> body = Map.of("model", "gpt-4o-mini", "messages",
+				List.of(Map.of("role", "user", "content", prompt)));
+
+		HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+		String apiUrl = "https://api.openai.com/v1/chat/completions";
+		ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
+		JSONObject jsonObject = new JSONObject(response);
+		System.out.println(jsonObject.toString());
+
+		String jsonResponse = response.getBody();
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode rootNode = null;
 		try {
 			rootNode = objectMapper.readTree(jsonResponse);
 		} catch (JsonMappingException e) {
@@ -162,12 +147,11 @@ public class OpenAIController {
 			e.printStackTrace();
 		}
 
-        // Accessing choices.message.content
-        String messageContent = rootNode.get("choices").get(0).get("message").get("content").asText();
-        System.out.println("Message Content: " + messageContent);
-        
-        return "OpenAI response for prompt: " + messageContent;  // Replace with actual call
-    }
-    
-    
+		// Accessing choices.message.content
+		String messageContent = rootNode.get("choices").get(0).get("message").get("content").asText();
+		System.out.println("Message Content: " + messageContent);
+
+		return "OpenAI response for prompt: " + messageContent; // Replace with actual call
+	}
+
 }

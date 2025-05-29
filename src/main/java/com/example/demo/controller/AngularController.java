@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.CombinedAIClientResponse;
+import com.example.demo.dto.CombinedClient;
+import com.example.demo.dto.CombinedClientService;
 import com.example.demo.dto.CombinedStatusCode;
 import com.example.demo.dto.DateTime;
 import com.example.demo.service.PercentageService;
@@ -15,7 +17,6 @@ import com.example.demo.service.TransactionService;
 
 @RestController
 public class AngularController {
-	
 
 	@Autowired
 	private TransactionService transactionService;
@@ -23,30 +24,45 @@ public class AngularController {
 	@Autowired
 	private PercentageService percentageService;
 
-	@PostMapping("/angularstatuscodeanalyse")
-	public List<CombinedStatusCode> angularhandleDateRange(@RequestBody DateTime dateTime) throws Exception {
+		// Status code analyzer
+		@PostMapping("/angularstatuscodeanalyse")
+		public List<CombinedStatusCode> angularhandleDateRange(@RequestBody DateTime dateTime) throws Exception {
 		System.out.println("inside transaction controller");
-		List<CombinedStatusCode> list = transactionService.angularprocessDateRange(dateTime);
-		for (CombinedStatusCode item : list) {
+		List<CombinedStatusCode> combinedStatusCode = transactionService.angularprocessDateRange(dateTime);
+		for (CombinedStatusCode item : combinedStatusCode) {
 		    System.out.println(item);
 		}
-		return list;  
-		
-	}
+			return combinedStatusCode;  
+		}
 	
-	// no traffic
+		// no traffic
 		@PostMapping("/angularzerotraffic")
-		public CombinedAIClientResponse zerotraffic(@RequestBody DateTime dateTime){
+		public CombinedAIClientResponse angularzerotraffic(@RequestBody DateTime dateTime){
 			System.out.println("inside transaction controller "+dateTime.getStartDate() +" "+ dateTime.getEndDate() );
-			CombinedAIClientResponse list = transactionService.angularprocessZeroTraffic(dateTime);
-			return list;  
+			CombinedAIClientResponse combinedAIClientResponse = transactionService.angularprocessZeroTraffic(dateTime);
+			return combinedAIClientResponse;  
 		}
 		
-		// increase traffic 
+		// no traffic
+				@PostMapping("/zerotraffic")
+				public List<CombinedClientService> zerotraffic(@RequestBody DateTime dateTime){
+					System.out.println("inside transaction controller "+dateTime.getStartDate() +" "+ dateTime.getEndDate() );
+					List<CombinedClientService> combinedAIClientResponse = transactionService.processZeroTraffic(dateTime);
+					return combinedAIClientResponse;  
+				}
+		
+		// 30% increase traffic 
 		@PostMapping("/angularincreasepercent")
 		public CombinedAIClientResponse increaseCount(@RequestBody DateTime dateTime) {
-			CombinedAIClientResponse res = this.percentageService.increasePercent(dateTime);
-			return res;
+			CombinedAIClientResponse combinedAIClientResponse = this.percentageService.increasePercent(dateTime);
+			return combinedAIClientResponse;
+		}
+		
+		// 30% decrease traffic
+		@PostMapping("/decreasepercent")
+		public List<CombinedClient> decreaseCount(@RequestBody DateTime dateTime) {
+			List<CombinedClient> combinedClient = this.percentageService.decreasePercent(dateTime);		
+			return combinedClient;
 		}
 		
 	

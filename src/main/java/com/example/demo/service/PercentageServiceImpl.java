@@ -24,22 +24,20 @@ import jakarta.persistence.Query;
 public class PercentageServiceImpl implements PercentageService {
 
 	private final EntityManager entityManager;
-	
 
-    public PercentageServiceImpl(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }	
-	
-    @Value("${queries1.countByClient}")
-    private String countByClient; 
-	
-    @Value("${queries1.percentincrease}")
-    private String percentincrease; 
-	
-    
-    @Autowired
-    private OpenAIController openAIController;
-    
+	public PercentageServiceImpl(EntityManager entityManager) {
+		this.entityManager = entityManager;
+	}
+
+	@Value("${queries.countByClient}")
+	private String countByClient;
+
+	@Value("${queries.percentincrease}")
+	private String percentincrease;
+
+	@Autowired
+	private OpenAIController openAIController;
+
 	@SuppressWarnings("unused")
 	@Override
 	public CombinedAIClientResponse increasePercent(DateTime dateTime) {
@@ -54,10 +52,10 @@ public class PercentageServiceImpl implements PercentageService {
 		List<Client> todayList = new ArrayList<>();
 
 		for (Object[] row : results) {
-		    String clientName = String.valueOf(row[0]);
-		  
-		    long count = ((Number) row[1]).longValue();  // Use correct index for count
-		    todayList.add(new Client(clientName, count));
+			String clientName = String.valueOf(row[0]);
+
+			long count = ((Number) row[1]).longValue(); // Use correct index for count
+			todayList.add(new Client(clientName, count));
 		}
 		System.out.println("Today's client service count: " + todayList);
 
@@ -72,32 +70,27 @@ public class PercentageServiceImpl implements PercentageService {
 		List<Client> yesterdayList = new ArrayList<>();
 
 		for (Object[] row : yresults) {
-		    String clientName = String.valueOf(row[0]);
-		   
-		    long count = ((Number) row[1]).longValue();  // Use correct index for count
-		    yesterdayList.add(new Client(clientName, count));
+			String clientName = String.valueOf(row[0]);
+
+			long count = ((Number) row[1]).longValue(); // Use correct index for count
+			yesterdayList.add(new Client(clientName, count));
 		}
 		System.out.println("Yesterday's client service count: " + yesterdayList);
 
 		// Compare data
-		
-		Map<String, Long> todayMap = todayList.stream()
-	            .collect(Collectors.toMap(Client::getClientname, Client::getCount));
 
-		
+		Map<String, Long> todayMap = todayList.stream()
+				.collect(Collectors.toMap(Client::getClientname, Client::getCount));
+
 		List<CombinedClient> increasedList = new ArrayList<>();
 
 		for (Client ycs : yesterdayList) {
-		    String key = ycs.getClientname() ;
-		    long todayCount = todayMap.getOrDefault(key, 0L);
+			String key = ycs.getClientname();
+			long todayCount = todayMap.getOrDefault(key, 0L);
 
-		    if (todayCount >= 1.3 * ycs.getCount()) {
-		        increasedList.add(new CombinedClient(
-		            ycs.getClientname(),
-		            todayCount,
-		            ycs.getCount()
-		        ));
-		    }
+			if (todayCount >= 1.3 * ycs.getCount()) {
+				increasedList.add(new CombinedClient(ycs.getClientname(), todayCount, ycs.getCount()));
+			}
 		}
 
 		System.out.println("Fetching increase in traffic list: " + increasedList);
@@ -105,14 +98,15 @@ public class PercentageServiceImpl implements PercentageService {
 		// Generate AI response
 		CombinedAIClientResponse res;
 		if (!increasedList.isEmpty()) {
-		     OpenAIRequestDTO openAIRequestDTO = new OpenAIRequestDTO(increasedList, dateTime.getStartDate(), percentincrease);
-		    String openapiresponse = "";
-		    openapiresponse=   this.openAIController.explainData(openAIRequestDTO);
-		    System.out.println("GPT response: " + openapiresponse);
+			OpenAIRequestDTO openAIRequestDTO = new OpenAIRequestDTO(increasedList, dateTime.getStartDate(),
+					percentincrease);
+			String openapiresponse = "";
+			openapiresponse = this.openAIController.explainData(openAIRequestDTO);
+			System.out.println("GPT response: " + openapiresponse);
 
-		    res = new CombinedAIClientResponse(openapiresponse, increasedList);
+			res = new CombinedAIClientResponse(openapiresponse, increasedList);
 		} else {
-		    res = new CombinedAIClientResponse("No increase in traffic found.", increasedList);
+			res = new CombinedAIClientResponse("No increase in traffic found.", increasedList);
 		}
 
 		return res;
@@ -195,67 +189,61 @@ public class PercentageServiceImpl implements PercentageService {
 //		        	 res = new CombinedAIClientServiceResponse("no data present", increasepercent);
 //		        }
 //		      
-		        
-		        
-	//	return res;
-		    
+
+		// return res;
+
 	}
-	
+
 	@Override
 	public List<CombinedClient> decreasePercent(DateTime dateTime) {
 		System.out.println("inside increase percentage service");
-		
-		 Query query = entityManager.createNativeQuery(countByClient);
-	        query.setParameter("startDateTime", dateTime.getStartDate());
-	        query.setParameter("endDateTime", dateTime.getEndDate());
-	        
-	        List<Object[]> results = query.getResultList();
-	        List<Client> response = new ArrayList<>();
 
-	        for (Object[] row : results) {
-	            String clientBame = String.valueOf(row[0]); // safe conversion for VARCHAR
-	            long count = ((Number) row[1]).longValue();
-	            response.add(new Client(clientBame, count));
-	        }
+		Query query = entityManager.createNativeQuery(countByClient);
+		query.setParameter("startDateTime", dateTime.getStartDate());
+		query.setParameter("endDateTime", dateTime.getEndDate());
 
-	        
-	        System.out.println("inside today client service count "+ response.toString());
-		
-	        
-	        
-	        Query yquery = entityManager.createNativeQuery(countByClient);        
-	        LocalDateTime yesterdayStart = dateTime.getStartDate().minusDays(1);
-	        LocalDateTime yesterdayEnd = dateTime.getEndDate().minusDays(1);
-	        
-	        query.setParameter("startDateTime", yesterdayStart);
-	        query.setParameter("endDateTime", yesterdayEnd);
-	        
-	        List<Object[]> yresults = query.getResultList();
-	        List<Client> yresponse = new ArrayList<>();
+		List<Object[]> results = query.getResultList();
+		List<Client> response = new ArrayList<>();
 
-	        for (Object[] row : yresults) {
-	        	String yclientBame = String.valueOf(row[0]); // safe conversion for VARCHAR
-	            long count = ((Number) row[1]).longValue();
-	            yresponse.add(new Client(yclientBame, count));
-	        }
-	        System.out.println("inside yesterday client service count "+ yresponse.toString());
-	
-	        
-			Map<String, Long> todayMap = response.stream()
-		            .collect(Collectors.toMap(Client::getClientname, Client::getCount));
-
-		    List<CombinedClient> increasepercent = new ArrayList<>();
-
-		    for (Client yc : yresponse) {
-		        long todayCount = todayMap.getOrDefault(yc.getClientname(), 0L);
-		        if (todayCount <= 0.3 * yc.getCount()) 
-		        {
-		        	increasepercent.add(new CombinedClient(yc.getClientname(), todayCount,yc.getCount() ));
-		        }
-		    }
-		        System.out.println("fetching increase in traffic list "+increasepercent.toString());
-		    
-		return increasepercent;	
+		for (Object[] row : results) {
+			String clientBame = String.valueOf(row[0]); // safe conversion for VARCHAR
+			long count = ((Number) row[1]).longValue();
+			response.add(new Client(clientBame, count));
 		}
+
+		System.out.println("inside today client service count " + response.toString());
+
+		Query yquery = entityManager.createNativeQuery(countByClient);
+		LocalDateTime yesterdayStart = dateTime.getStartDate().minusDays(1);
+		LocalDateTime yesterdayEnd = dateTime.getEndDate().minusDays(1);
+
+		query.setParameter("startDateTime", yesterdayStart);
+		query.setParameter("endDateTime", yesterdayEnd);
+
+		List<Object[]> yresults = query.getResultList();
+		List<Client> yresponse = new ArrayList<>();
+
+		for (Object[] row : yresults) {
+			String yclientBame = String.valueOf(row[0]); // safe conversion for VARCHAR
+			long count = ((Number) row[1]).longValue();
+			yresponse.add(new Client(yclientBame, count));
+		}
+		System.out.println("inside yesterday client service count " + yresponse.toString());
+
+		Map<String, Long> todayMap = response.stream()
+				.collect(Collectors.toMap(Client::getClientname, Client::getCount));
+
+		List<CombinedClient> increasepercent = new ArrayList<>();
+
+		for (Client yc : yresponse) {
+			long todayCount = todayMap.getOrDefault(yc.getClientname(), 0L);
+			if (todayCount <= 0.3 * yc.getCount()) {
+				increasepercent.add(new CombinedClient(yc.getClientname(), todayCount, yc.getCount()));
+			}
+		}
+		System.out.println("fetching increase in traffic list " + increasepercent.toString());
+
+		return increasepercent;
+	}
 
 }

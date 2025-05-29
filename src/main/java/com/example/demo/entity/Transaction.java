@@ -1,6 +1,7 @@
 package com.example.demo.entity;
 
 import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,15 +18,15 @@ import lombok.ToString;
 @ToString
 public class Transaction {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer srno;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer srno;
 
-    private String clientid;
-    private String channel;
-    private String servicename;
-    private String statuscode;
-    private LocalDateTime createddate;
+	private String clientid;
+	private String channel;
+	private String servicename;
+	private String statuscode;
+	private LocalDateTime createddate;
 
-    // Getters and Setters
+	// Getters and Setters
 }
