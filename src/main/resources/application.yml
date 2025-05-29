@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/student?allowPublicKeyRetrieval=true&useSSL=false
-    username: 
-    password: 
+    username:
+    password:
 
   jpa:
     hibernate:
@@ -14,8 +14,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: 
-    password: 
+    username:
+    password:
     properties:
       mail:
         smtp:
@@ -43,5 +43,5 @@ queries:
     GROUP BY clientid,servicename,channel
   countByClientquestion: can you analyze this data ang give very short description about it in points in html format?
   percentincrease: can you analyze this data ang give very short description about it in points do not read values?
-  DBdescription: i have mysqlDB there is transaction table which has columns srno,clientid,channel,servicename,statuscode,createddate, so based on given information can you write generate mysql query so that i can directly send to mysql to get data.   
-apiKey: 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
+  DBdescription: i have mysqlDB there is transaction table which has columns srno,clientid,channel,servicename,statuscode,createddate, so based on given information can you write generate mysql query so that i can directly send to mysql to get data.
+apiKey:
